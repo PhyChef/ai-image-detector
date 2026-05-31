@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Image Detector — Free, Private, In-Browser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --surface2: #f2f1ee;
+    --border: #e2e0db;
+    --border2: #cbc9c2;
+    --text: #1a1a18;
+    --text2: #5a5955;
+    --text3: #9b9991;
+    --accent: #4a3fb5;
+    --accent-bg: #eeecfd;
+    --accent-txt: #2e2882;
+    --danger: #c0392b;
+    --danger-bg: #fdf0ef;
+    --danger-txt: #922b21;
+    --warn: #b45309;
+    --warn-bg: #fef9ee;
+    --warn-txt: #854d0e;
+    --ok: #1a7a52;
+    --ok-bg: #edfaf4;
+    --ok-txt: #14603f;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .nav-logo-icon {
+    width: 30px;
+    height: 30px;
+    background: var(--accent);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-badge {
+    font-size: 11px;
+    font-weight: 500;
+    background: var(--accent-bg);
+    color: var(--accent-txt);
+    padding: 3px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.02em;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 24px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 13px;
+    color: var(--text2);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--text); }
+
+  .hero {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 52px 24px 40px;
+    text-align: center;
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent-txt);
+    background: var(--accent-bg);
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 18px;
+    letter-spacing: 0.03em;
+  }
+
+  .hero h1 {
+    font-size: clamp(24px, 4vw, 38px);
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 14px;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+  }
+
+  .hero p {
+    font-size: 15px;
+    color: var(--text2);
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.65;
+  }
+
+  .pills {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    font-size: 12px;
+    color: var(--text2);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ok);
+  }
+
+  main {
+    flex: 1;
+    max-width: 680px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 32px 20px 48px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  #upload-zone {
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 44px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    background: var(--surface2);
+  }
+
+  #upload-zone:hover, #upload-zone.drag-over {
+    background: var(--accent-bg);
+    border-color: var(--accent);
+  }
+
+  .upload-icon-wrap {
+    width: 52px;
+    height: 52px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #upload-zone h2 {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  #upload-zone p {
+    font-size: 13px;
+    color: var(--text3);
+    margin-bottom: 18px;
+    line-height: 1.5;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 10px 22px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn-primary:hover { opacity: 0.88; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 9px 18px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-ghost:hover { background: var(--surface2); }
+
+  .divider-or {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    max-width: 280px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .divider-or::before, .divider-or::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .divider-or span {
+    font-size: 12px;
+    color: var(--text3);
+  }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .stat-lbl {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 3px;
+  }
+
+  #results-panel { display: none; }
+
+  .result-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  #thumb {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .result-meta-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 360px;
+  }
+
+  .result-meta-detail {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 10px;
+  }
+
+  .signals-section { padding: 20px; }
+
+  .signals-heading {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text3);
+    margin-bottom: 14px;
+  }
+
+  .sig-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 11px;
+  }
+
+  .sig-label {
+    font-size: 12px;
+    color: var(--text2);
+    width: 190px;
+    flex-shrink: 0;
+  }
+
+  .sig-bar-bg {
+    flex: 1;
+    height: 5px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .sig-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.7s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  .sig-pct {
+    font-size: 12px;
+    font-weight: 500;
+    width: 34px;
+    text-align: right;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .verdict-block {
+    margin: 0 20px 20px;
+    border-radius: var(--radius);
+    padding: 20px 22px;
+  }
+
+  .verdict-top {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  .verdict-pct {
+    font-size: 46px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .verdict-lbl {
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .verdict-sub {
+    font-size: 13px;
+    opacity: 0.75;
+    margin-bottom: 14px;
+  }
+
+  .reason-list { margin-bottom: 14px; }
+
+  .reason-item {
+    font-size: 12.5px;
+    line-height: 1.55;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 7px;
+    opacity: 0.85;
+  }
+
+  .reason-bullet {
+    flex-shrink: 0;
+    margin-top: 4px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.6;
+  }
+
+  .disclaimer-txt {
+    font-size: 11px;
+    opacity: 0.55;
+    line-height: 1.5;
+    border-top: 1px solid currentColor;
+    padding-top: 10px;
+    opacity: 0.4;
+  }
+
+  .how-it-works {
+    margin-top: 32px;
+    padding: 0 4px;
+  }
+
+  .how-heading {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .signal-explainers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 10px;
+  }
+
+  .signal-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+  }
+
+  .signal-card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 5px;
+  }
+
+  .signal-card-body {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.55;
+  }
+
+  footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .footer-txt {
+    font-size: 12px;
+    color: var(--text3);
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 20px;
+  }
+
+  .footer-links a {
+    font-size: 12px;
+    color: var(--text3);
+    text-decoration: none;
+  }
+
+  .footer-links a:hover { color: var(--text); }
+
+  @media (max-width: 500px) {
+    .sig-label { width: 130px; font-size: 11px; }
+    nav .nav-links { display: none; }
+    .hero { padding: 36px 16px 28px; }
+    .verdict-pct { font-size: 36px; }
+    .verdict-lbl { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="nav-logo-icon">
+      <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/>
+      </svg>
+    </div>
+    AI Image Detector
+    <span class="nav-badge">free</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how-it-works">How it works</a></li>
+    <li><a href="#signals">Signals</a></li>
+  </ul>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">
+    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+    100% private — runs in your browser
+  </div>
+  <h1>Is this image AI-generated?</h1>
+  <p>Upload any photo and get an instant probability estimate with per-signal reasoning. No account, no uploads, no cost.</p>
+  <div class="pills">
+    <div class="pill"><div class="pill-dot"></div>No data sent to any server</div>
+    <div class="pill"><div class="pill-dot"></div>6 heuristic signals</div>
+    <div class="pill"><div class="pill-dot"></div>Works on any device</div>
+  </div>
+</div>
+
+<main>
+
+  <div id="upload-panel">
+    <div id="upload-zone" onclick="document.getElementById('file-input').click()" role="button" tabindex="0" aria-label="Upload image">
+      <div class="upload-icon-wrap">
+        <svg width="24" height="24" fill="none" stroke="#4a3fb5" stroke-width="1.5" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="18" height="18" rx="3"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <path d="m21 15-5-5L5 21"/>
+        </svg>
+      </div>
+      <h2>Drop your image here</h2>
+      <p>JPEG, PNG, WebP — processed entirely on your device<br>nothing is uploaded anywhere</p>
+      <button class="btn-primary" onclick="event.stopPropagation(); document.getElementById('file-input').click()">Choose image</button>
+      <div class="divider-or"><span>or drag and drop</span></div>
+      <input type="file" id="file-input" accept="image/*" style="display:none">
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-num">6</div><div class="stat-lbl">signals analyzed</div></div>
+      <div class="stat-box"><div class="stat-num">0 KB</div><div class="stat-lbl">data uploaded</div></div>
+      <div class="stat-box"><div class="stat-num">free</div><div class="stat-lbl">forever</div></div>
+    </div>
+  </div>
+
+  <div id="results-panel">
+    <div class="card">
+      <div class="result-header">
+        <img id="thumb" alt="Uploaded image thumbnail">
+        <div style="flex:1; min-width:0;">
+          <div class="result-meta-name" id="fname"></div>
+          <div class="result-meta-detail" id="fmeta"></div>
+          <button class="btn-ghost" onclick="resetTool()">← Analyze another image</button>
+        </div>
+      </div>
+
+      <div class="signals-section" id="signals-section">
+        <div class="signals-heading">Signal analysis</div>
+        <div id="signals-list"></div>
+      </div>
+
+      <div class="verdict-block" id="verdict-block">
+        <div class="verdict-top">
+          <span class="verdict-pct" id="verdict-pct"></span>
+          <span class="verdict-lbl" id="verdict-lbl"></span>
+        </div>
+        <div class="verdict-sub" id="verdict-sub">probability of AI generation</div>
+        <div class="reason-list" id="reason-list"></div>
+        <div class="disclaimer-txt">
+          This is a heuristic estimate based on pixel-level signals — no client-side tool achieves high accuracy without a trained model. Use this as a first filter, not a definitive verdict. Heavily edited real photos may score high; sophisticated AI images may score low.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="how-it-works" id="signals">
+    <div class="how-heading" id="how-it-works">How it works — the 6 signals</div>
+    <div class="signal-explainers">
+      <div class="signal-card">
+        <div class="signal-card-title">Noise uniformity</div>
+        <div class="signal-card-body">Real cameras produce irregular sensor noise. AI diffusion models synthesize texture procedurally, creating unnaturally uniform noise patterns across image regions.</div>
+      </div>
+      <div class="signal-card">
+        <div class="signal-card-title">Color gradient smoothness</div>
+        <div class="signal-card-body">AI models interpolate color in ways optical lenses don't. Real photos have micro-transitions and optical variation; AI outputs blend too cleanly.</div>
+      </div>
+      <div class="signal-card">
+        <div class="signal-card-title">High-frequency detail bias</div>
+        <div class="signal-card-body">Latent diffusion models struggle with fine repetitive texture — hair strands, fabric weave, foliage. This signal checks how high-frequency content distributes.</div>
+      </div>
+      <div class="signal-card">
+        <div class="signal-card-title">Edge coherence</div>
+        <div class="signal-card-body">AI edges are mathematically "too clean." Real lenses produce bokeh falloff and optical blur; diffusion model edges are unnaturally smooth and consistent.</div>
+      </div>
+      <div class="signal-card">
+        <div class="signal-card-title">Saturation clustering</div>
+        <div class="signal-card-body">AI has an aesthetic tendency to hyper-saturate dominant hues while compressing mid-tone variation. Real photos have wider, less clustered saturation spread.</div>
+      </div>
+      <div class="signal-card">
+        <div class="signal-card-title">Output dimension pattern</div>
+        <div class="signal-card-body">Most AI generators output at fixed sizes (512, 768, 1024, 1536px). Cameras produce sensor-native resolutions that rarely align with these standard AI output dimensions.</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-txt">All analysis happens locally in your browser. No image data is ever stored or transmitted.</span>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="https://github.com" target="_blank">GitHub</a>
+  </div>
+</footer>
+
+<script>
+const fileInput = document.getElementById('file-input');
+const uploadZone = document.getElementById('upload-zone');
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+uploadZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+function resetTool() {
+  document.getElementById('upload-panel').style.display = '';
+  document.getElementById('results-panel').style.display = 'none';
+  fileInput.value = '';
+}
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => analyzeImage(img, file, e.target.result);
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function analyzeImage(img, file, dataUrl) {
+  document.getElementById('upload-panel').style.display = 'none';
+  document.getElementById('results-panel').style.display = '';
+  document.getElementById('thumb').src = dataUrl;
+  document.getElementById('fname').textContent = file.name;
+  document.getElementById('fmeta').textContent =
+    `${img.width} × ${img.height}px · ${(file.size / 1024).toFixed(0)} KB · ${file.type || 'image'}`;
+
+  const canvas = document.createElement('canvas');
+  const MAX = 600;
+  const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+  canvas.width = Math.round(img.width * scale);
+  canvas.height = Math.round(img.height * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const px = data.data;
+  const w = canvas.width, h = canvas.height;
+
+  const signals = [
+    buildSignal('Noise uniformity', measureNoiseUniformity(px, w, h),
+      s => s > 60
+        ? 'Noise distribution is very uniform across regions — characteristic of diffusion model outputs which synthesize texture procedurally.'
+        : s > 35
+        ? 'Moderate noise uniformity — consistent with some AI models or heavily post-processed photos.'
+        : 'Irregular noise pattern — consistent with sensor noise from a real camera.'),
+    buildSignal('Color gradient smoothness', measureColorSmoothness(px, w, h),
+      s => s > 65
+        ? 'Extremely smooth color transitions — AI diffusion models interpolate color in ways cameras and optical lenses do not.'
+        : s > 40
+        ? 'Moderately smooth gradients — could be AI or a well-lit studio photo.'
+        : 'Abrupt color transitions — more consistent with real-world photography.'),
+    buildSignal('High-frequency detail bias', measureFrequencyBias(px, w, h),
+      s => s > 60
+        ? 'High-frequency content shows diffusion-typical smoothing in detail regions — a known artifact of latent diffusion models.'
+        : s > 35
+        ? 'Mixed frequency content — inconclusive signal.'
+        : 'Strong high-frequency detail throughout — consistent with optical capture.'),
+    buildSignal('Edge coherence', measureEdgeCoherence(px, w, h),
+      s => s > 65
+        ? 'Edges are unusually smooth and coherent — diffusion models produce edges that are mathematically too clean compared to optical blur.'
+        : s > 40
+        ? 'Semi-coherent edges — could reflect post-sharpening or AI upscaling.'
+        : 'Edges show natural optical blur and bokeh-style falloff — consistent with real camera optics.'),
+    buildSignal('Saturation clustering', measureSaturationClustering(px),
+      s => s > 60
+        ? 'Saturation is heavily clustered around a few dominant hues with limited mid-tone variation — a known AI aesthetic tendency.'
+        : s > 35
+        ? 'Moderate saturation clustering — consistent with filtered or edited photography.'
+        : 'Broad saturation spread — natural photos typically have wide, uneven saturation distribution.'),
+    buildSignal('Output dimension pattern', measureDimensionScore(img.width, img.height),
+      s => s > 70
+        ? `${img.width}×${img.height} matches standard AI generation sizes (512, 768, 1024, 1536px) — cameras produce non-standard resolutions.`
+        : s > 40
+        ? `${img.width}×${img.height} is a plausible AI output size but also common after cropping.`
+        : `${img.width}×${img.height} is atypical for AI generation — more consistent with camera capture.`),
+  ];
+
+  const weights = [0.22, 0.18, 0.18, 0.17, 0.15, 0.10];
+  const weightedScore = Math.round(signals.reduce((acc, s, i) => acc + s.score * weights[i], 0));
+
+  renderSignals(signals);
+  renderVerdict(signals, weightedScore);
+}
+
+function buildSignal(label, score, reasonFn) {
+  return { label, score, reasoning: reasonFn(score) };
+}
+
+function renderSignals(signals) {
+  const list = document.getElementById('signals-list');
+  list.innerHTML = signals.map(s => {
+    const color = s.score > 65 ? '#c0392b' : s.score > 40 ? '#b45309' : '#1a7a52';
+    return `<div class="sig-row">
+      <span class="sig-label">${s.label}</span>
+      <div class="sig-bar-bg"><div class="sig-bar" style="width:0%;background:${color}" data-target="${s.score}"></div></div>
+      <span class="sig-pct" style="color:${color}">${s.score}%</span>
+    </div>`;
+  }).join('');
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.sig-bar').forEach(bar => {
+      bar.style.width = bar.dataset.target + '%';
+    });
+  });
+}
+
+function renderVerdict(signals, score) {
+  const isAI = score >= 65, isMixed = score >= 40;
+  const colors = isAI
+    ? { bg: '#fdf0ef', text: '#c0392b', sub: '#922b21' }
+    : isMixed
+    ? { bg: '#fef9ee', text: '#b45309', sub: '#854d0e' }
+    : { bg: '#edfaf4', text: '#1a7a52', sub: '#14603f' };
+  const label = isAI ? 'Likely AI-generated' : isMixed ? 'Uncertain — mixed signals' : 'Likely authentic';
+
+  const block = document.getElementById('verdict-block');
+  block.style.background = colors.bg;
+  block.style.color = colors.sub;
+
+  document.getElementById('verdict-pct').style.color = colors.text;
+  document.getElementById('verdict-pct').textContent = score + '%';
+  document.getElementById('verdict-lbl').style.color = colors.text;
+  document.getElementById('verdict-lbl').textContent = label;
+  document.getElementById('verdict-sub').style.color = colors.sub;
+
+  const top3 = [...signals].sort((a, b) => b.score - a.score).slice(0, 3);
+  document.getElementById('reason-list').innerHTML = top3.map(s =>
+    `<div class="reason-item" style="color:${colors.sub}">
+      <div class="reason-bullet" style="background:${colors.text}; margin-top:6px; width:5px; height:5px; border-radius:50%; flex-shrink:0;"></div>
+      <span>${s.reasoning}</span>
+    </div>`
+  ).join('');
+}
+
+function measureNoiseUniformity(px, w, h) {
+  const blockSize = Math.max(4, Math.floor(Math.min(w, h) / 16));
+  const blockVars = [];
+  for (let by = 0; by < h - blockSize; by += blockSize) {
+    for (let bx = 0; bx < w - blockSize; bx += blockSize) {
+      let vals = [];
+      for (let y = by; y < by + blockSize; y++) {
+        for (let x = bx; x < bx + blockSize; x++) {
+          const i = (y * w + x) * 4;
+          vals.push((px[i] + px[i+1] + px[i+2]) / 3);
+        }
+      }
+      const mean = vals.reduce((a,b) => a+b, 0) / vals.length;
+      const variance = vals.reduce((a,b) => a + (b-mean)**2, 0) / vals.length;
+      blockVars.push(Math.sqrt(variance));
+    }
+  }
+  if (!blockVars.length) return 50;
+  const meanVar = blockVars.reduce((a,b) => a+b,0) / blockVars.length;
+  const varOfVar = blockVars.reduce((a,b) => a + (b-meanVar)**2, 0) / blockVars.length;
+  const cv = meanVar > 0 ? Math.sqrt(varOfVar) / meanVar : 0;
+  return Math.round(Math.max(0, Math.min(100, 100 - cv * 80)));
+}
+
+function measureColorSmoothness(px, w, h) {
+  let totalDiff = 0, count = 0;
+  const step = Math.max(1, Math.floor(w / 80));
+  for (let y = 0; y < h - step; y += step) {
+    for (let x = 0; x < w - step; x += step) {
+      const i = (y * w + x) * 4;
+      const j = ((y + step) * w + (x + step)) * 4;
+      totalDiff += Math.abs(px[i]-px[j]) + Math.abs(px[i+1]-px[j+1]) + Math.abs(px[i+2]-px[j+2]);
+      count++;
+    }
+  }
+  const avgDiff = count > 0 ? totalDiff / count : 0;
+  return Math.round(Math.max(0, Math.min(100, 100 - avgDiff * 1.5)));
+}
+
+function measureFrequencyBias(px, w, h) {
+  const sW = Math.min(w, 120), sH = Math.min(h, 120);
+  let highFreqTotal = 0, lowFreqTotal = 0;
+  for (let y = 1; y < sH - 1; y++) {
+    for (let x = 1; x < sW - 1; x++) {
+      const i = (y*w+x)*4, l=(y*w+(x-1))*4, r=(y*w+(x+1))*4, u=((y-1)*w+x)*4, d=((y+1)*w+x)*4;
+      const lum = c => px[c]*0.299 + px[c+1]*0.587 + px[c+2]*0.114;
+      const lap = Math.abs(4*lum(i)-lum(l)-lum(r)-lum(u)-lum(d));
+      if (lap > 30) highFreqTotal += lap; else lowFreqTotal += lum(i);
+    }
+  }
+  const ratio = highFreqTotal / (lowFreqTotal + highFreqTotal + 1);
+  return Math.round(Math.max(0, Math.min(100, 80 - ratio * 400)));
+}
+
+function measureEdgeCoherence(px, w, h) {
+  const sW = Math.min(w, 200), sH = Math.min(h, 200);
+  let edgeVals = [];
+  for (let y = 1; y < sH - 1; y += 2) {
+    for (let x = 1; x < sW - 1; x += 2) {
+      const i = (y*w+x)*4, r = (y*w+(x+1))*4, d = ((y+1)*w+x)*4;
+      const gx = Math.abs(px[i]-px[r])+Math.abs(px[i+1]-px[r+1])+Math.abs(px[i+2]-px[r+2]);
+      const gy = Math.abs(px[i]-px[d])+Math.abs(px[i+1]-px[d+1])+Math.abs(px[i+2]-px[d+2]);
+      edgeVals.push(Math.sqrt(gx*gx+gy*gy));
+    }
+  }
+  if (!edgeVals.length) return 50;
+  edgeVals.sort((a,b) => a-b);
+  const top10 = edgeVals.slice(Math.floor(edgeVals.length * 0.9));
+  const mean = top10.reduce((a,b)=>a+b,0)/top10.length;
+  const variance = top10.reduce((a,b)=>a+(b-mean)**2,0)/top10.length;
+  const cv = mean > 0 ? Math.sqrt(variance)/mean : 1;
+  return Math.round(Math.max(0, Math.min(100, 100 - cv * 60)));
+}
+
+function measureSaturationClustering(px) {
+  const buckets = new Array(36).fill(0);
+  let coloredPx = 0;
+  for (let i = 0; i < px.length; i += 16) {
+    const r = px[i]/255, g = px[i+1]/255, b = px[i+2]/255;
+    const max = Math.max(r,g,b), min = Math.min(r,g,b);
+    if (max - min < 0.1) continue;
+    coloredPx++;
+    let h = 0;
+    if (max === r) h = ((g-b)/(max-min)+6)%6;
+    else if (max === g) h = (b-r)/(max-min)+2;
+    else h = (r-g)/(max-min)+4;
+    buckets[Math.floor(h*6)]++;
+  }
+  if (coloredPx < 10) return 50;
+  const maxB = Math.max(...buckets);
+  return Math.round(Math.max(0, Math.min(100, (maxB/coloredPx)*300)));
+}
+
+function measureDimensionScore(w, h) {
+  const aiSizes = [512,640,768,832,896,960,1024,1152,1280,1344,1536,2048];
+  const matchW = aiSizes.some(s => Math.abs(w-s) < 8);
+  const matchH = aiSizes.some(s => Math.abs(h-s) < 8);
+  if (matchW && matchH) return 85;
+  if (matchW || matchH) return 55;
+  const isPow2 = n => n > 0 && (n & (n-1)) === 0;
+  if (isPow2(w) || isPow2(h)) return 60;
+  return 20;
+}
+</script>
+</body>
+</html>
